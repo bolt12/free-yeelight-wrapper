@@ -15,6 +15,7 @@ You just need to enable *LAN Control* on the Yeelight App and check the IP.
 ## Installing
 
 `> make compile`
+
 `> sudo make install`
 
 This will install the program on your computer. You can then makeee alias on your `.bashrc` like this:
