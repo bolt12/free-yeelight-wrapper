@@ -19,9 +19,11 @@ You just need to enable *LAN Control* on the Yeelight App and check the IP.
 
 This will install the program on your computer. You can then makeee alias on your `.bashrc` like this:
 
-`alias lightOn='ylwrapper on'`
-`alias lightOff='ylwrapper off'`
-`alias lightToggle='ylwrapper off'`
+```
+alias lightOn='ylwrapper on'
+alias lightOff='ylwrapper off'
+alias lightToggle='ylwrapper off'
+```
 
 ## Configuring
 
