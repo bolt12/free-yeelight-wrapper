@@ -6,6 +6,7 @@ import qualified Control.Exception as E
 import qualified Data.ByteString.Char8 as C
 import qualified Data.ByteString as B
 import Control.Monad
+import Control.Concurrent
 import Network.Socket hiding (recv, sendAll)
 import Network.Socket.ByteString (recv, sendAll, sendTo, recvFrom)
 import Network.Multicast
@@ -63,6 +64,7 @@ discoveryProtocol = C.pack ("M-SEARCH * HTTP/1.1\r\n" ++
 discover :: AddrInfo -> IO Socket
 discover _ = withSocketsDo $ do
         (sSock, sAddr) <- multicastSender "239.255.255.250" 1982
+        timerThread sSock
         sendTo sSock discoveryProtocol sAddr
         (msg, rAddr)              <- recvFrom sSock 1024
         let (SockAddrInet _ host) = rAddr
@@ -73,6 +75,11 @@ discover _ = withSocketsDo $ do
         addr                      <- resolve ip "55443"
         updateAddress ip
         open addr
+    where
+        timerThread s= forkIO $ do
+            threadDelay 1
+            putStrLn "Couldn't find any device!"
+            close s
 
 
 -- (2) Main program -----------
