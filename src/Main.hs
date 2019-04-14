@@ -1,10 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Main (main) where
 
 import qualified Control.Exception as E
 import qualified Data.ByteString.Char8 as C
 import Network.Socket hiding (recv, sendAll)
 import Network.Socket.ByteString (recv, sendAll)
+import Network.Multicast
 import System.Directory
 import System.Environment
 
@@ -40,6 +42,21 @@ talk sock cmd = do
         msg <- recv sock 1024
         putStr "Received: "
         C.putStrLn msg
+
+discoveryProtocol :: String
+discoveryProtocol = "M-SEARCH * HTTP/1.1\r\n" ++
+    "HOST: 239.255.255.250:1982\r\n" ++
+    "MAN: \"ssdp:discover\"\r\n" ++
+    "ST: wifi_bulb"
+
+{-
+discover :: IO HostName
+discover = withSocketsDo $ do
+        addr <- resolve "239.255.255.250" 1982
+        connect sock $ "239.255.255.250"
+    where
+        multicastSocket = socket AF_INET Datagram 1982
+        -}
 
 -- (2) Main program -----------
 
