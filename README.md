@@ -14,7 +14,7 @@ You just need to enable *LAN Control* on the Yeelight App and check the IP.
 
 ## Installing
 
-`> cabal install yeelight-wrapper`
+`> cabal new-install yeelight-wrapper`
 
 This will install the program on your computer. You can then make an alias on your `.bashrc` like this:
 
