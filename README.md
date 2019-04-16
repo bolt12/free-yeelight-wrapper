@@ -14,11 +14,9 @@ You just need to enable *LAN Control* on the Yeelight App and check the IP.
 
 ## Installing
 
-`> make compile`
+`> cabal install yeelight-wrapper`
 
-`> sudo make install`
-
-This will install the program on your computer. You can then makeee alias on your `.bashrc` like this:
+This will install the program on your computer. You can then make an alias on your `.bashrc` like this:
 
 ```
 alias lightOn='ylwrapper on'
@@ -50,7 +48,8 @@ Right now this tool only supports:
 
 - Turning the light *on*;
 - Turning the light *off*;
-- Toggling the light.
+- Toggling the light;
+- Discovery protocol.
 
 There's a lot more commands available in the [documentation](https://www.yeelight.com/download/Yeelight_Inter-Operation_Spec.pdf). 
 
