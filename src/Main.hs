@@ -5,11 +5,15 @@ module Main (main) where
 import qualified Control.Exception as E
 import qualified Data.ByteString.Char8 as C
 import qualified Data.ByteString as B
+import Data.Maybe
+import System.IO
+import System.Exit
 import Control.Monad
 import Control.Concurrent
 import Network.Socket hiding (recv, sendAll)
 import Network.Socket.ByteString (recv, sendAll, sendTo, recvFrom)
 import Network.Multicast
+import System.Timeout
 import System.Directory
 import System.Environment
 
@@ -63,32 +67,31 @@ discoveryProtocol = C.pack ("M-SEARCH * HTTP/1.1\r\n" ++
 
 discover :: AddrInfo -> IO Socket
 discover _ = withSocketsDo $ do
-        (sSock, sAddr) <- multicastSender "239.255.255.250" 1982
-        timerThread sSock
-        sendTo sSock discoveryProtocol sAddr
-        (msg, rAddr)              <- recvFrom sSock 1024
-        let (SockAddrInet _ host) = rAddr
-            (w1, w2, w3, w4)      = hostAddressToTuple host
-            (i1, i2, i3, i4)      = (fromIntegral w1, fromIntegral w2, fromIntegral w3,
-                                     fromIntegral w4)
-            ip                    = show i1 ++ "." ++ show i2 ++ "." ++ show i3 ++ "." ++ show i4
-        addr                      <- resolve ip "55443"
-        updateAddress ip
-        open addr
-    where
-        timerThread s= forkIO $ do
-            threadDelay 1
-            putStrLn "Couldn't find any device!"
-            close s
-
+    putStrLn "Searching device... If program exits then it wasn't successful"
+    (sSock, sAddr) <- multicastSender "239.255.255.250" 1982
+    sendTo sSock discoveryProtocol sAddr
+    (msg, rAddr)   <- recvFrom sSock 1024
+    putStrLn "Found!"
+    let (SockAddrInet _ host) = rAddr
+        (w1, w2, w3, w4)      = hostAddressToTuple host
+        (i1, i2, i3, i4)      = (fromIntegral w1, fromIntegral w2, fromIntegral w3, fromIntegral w4)
+        ip                    = show i1 ++ "." ++ show i2 ++ "." ++ show i3 ++ "." ++ show i4
+        in do
+            addr <- resolve ip "55443"
+            updateAddress ip
+            open addr
 
 -- (2) Main program -----------
 
 main :: IO ()
-main = withSocketsDo $ do
-    cmd <- getArgs
-    (host, port) <- getAddress
-    E.bracketOnError (resolve host port) (loop cmd <=< discover) (loop cmd <=< open)
+main = do 
+    hSetBuffering stdout LineBuffering
+    id <- forkIO $ withSocketsDo $ do
+        cmd <- getArgs
+        (host, port) <- getAddress
+        E.bracketOnError (resolve host port) (loop cmd <=< discover) (loop cmd <=< open)
+    threadDelay 1500000
+    killThread id
  where
      loop cmd sock = do
          case cmd of
