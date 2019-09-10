@@ -21,7 +21,6 @@ This will install the program on your computer. You can then make an alias on yo
 ```
 alias lightOn='free-yeelight-wrapper on'
 alias lightOff='free-yeelight-wrapper off'
-alias lightToggle='free-yeelight-wrapper off'
 ```
 
 ## Configuring
