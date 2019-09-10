@@ -6,14 +6,14 @@
 
 module Main where
 
-import qualified Network.Socket as NS
-import Polysemy
-import Polysemy.Trace
-import Data.Maybe
-import Config
-import Multicast
-import Socket
-import Types
+import qualified Network.Socket                as NS
+import           Polysemy
+import           Polysemy.Trace
+import           Data.Maybe
+import           Config
+import           Multicast
+import           Socket
+import           Types
 
 discover :: Members '[Socket, Multicast] r => Sem r (Maybe NS.Socket)
 discover = do
@@ -24,10 +24,10 @@ program :: Members '[Config, Socket, Multicast, Trace] r => Sem r ()
 program = do
     commands <- listToMaybe <$> getArguments
     case commands of
-        Nothing -> trace "Please provide a command"
+        Nothing  -> trace "Please provide a command"
         Just cmd -> do
             (host, port) <- getAddress
-            ip <- resolve host port
+            ip           <- resolve host port
             case ip of
                 Nothing -> do
                     trace "Discovering..."
@@ -39,9 +39,10 @@ program = do
                     maybe (return ()) (unicast cmd) sock
 
 main :: IO ()
-main = runM
-    . interpretConfig
-    . interpretMulticast
-    . interpretSocket
-    . traceToIO
-    $ program
+main =
+    runM
+        . interpretConfig
+        . interpretMulticast
+        . interpretSocket
+        . traceToIO
+        $ program
