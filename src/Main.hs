@@ -10,16 +10,18 @@ import System.IO
 import System.Exit
 import Control.Monad
 import Control.Concurrent
-import Network.Socket hiding (recv, sendAll)
+import Network.Socket hiding (recv, sendAll, sendTo, recvFrom)
 import Network.Socket.ByteString (recv, sendAll, sendTo, recvFrom)
 import Network.Multicast
 import System.Timeout
 import System.Directory
 import System.Environment
 
+import Polysemy
+
 -- (1) Auxiliary functions -----------
 
-getAddress :: IO (HostName, ServiceName)
+getAddress :: IO (HostName, SSem (Teletype ': r) a -> Sem r aerviceName)
 getAddress = do
         homeDir <- getHomeDirectory
         let fileP = homeDir ++ "/.yeelight_wrapper.config"
@@ -83,6 +85,19 @@ discover _ = withSocketsDo $ do
 
 -- (2) Main program -----------
 
+discover :: Members '[Socket, Multicast] r => Sem r (Maybe Socket)
+discover = do
+    ip <- multicast "239.255.255.250" 1982
+    connect ip
+
+program :: Members '[Config, Socket, Resource] r => Sem r ()
+program = do 
+    command <- getArguments
+    (host, port) <- getAddress
+    onException (resolve host port)
+                (const discover >>= unicast cmd)
+                (unicast cmd)
+    
 main :: IO ()
 main = do 
     hSetBuffering stdout LineBuffering
