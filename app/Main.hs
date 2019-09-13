@@ -15,8 +15,9 @@ import           Multicast
 import           Socket
 import           Types
 
-discover :: Members '[Socket, Multicast] r => Sem r (Maybe NS.Socket)
+discover :: Members '[Socket, Multicast, Trace] r => Sem r (Maybe NS.Socket)
 discover = do
+    trace "Discovering..."
     ip <- multicast "239.255.255.250" 1982
     connect ip
 
@@ -30,13 +31,16 @@ program = do
             ip           <- resolve host port
             case ip of
                 Nothing -> do
-                    trace "Discovering..."
                     sock <- discover
-                    maybe (trace "Discovery timeout!") (unicast cmd) sock
+                    maybe (trace "Discovery timeout!") 
+                          (unicast cmd) 
+                          sock
                 _ -> do
                     trace "Connecting..."
                     sock <- connect ip
-                    maybe (return ()) (unicast cmd) sock
+                    maybe (discover >>= maybe (trace "Discovery timeout!") (unicast cmd)) 
+                          (unicast cmd) 
+                          sock
 
 main :: IO ()
 main =
