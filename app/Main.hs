@@ -6,22 +6,25 @@
 
 module Main where
 
-import qualified Network.Socket                as NS
-import           Polysemy
-import           Polysemy.Trace
-import           Data.Maybe
-import           Config
-import           Multicast
-import           Socket
-import           Types
+import Control.Exception
+import qualified Network.Socket as NS
+import Polysemy
+import Polysemy.Trace
+import Polysemy.Resource
+import Polysemy.Final
+import Data.Maybe
+import Config
+import Multicast
+import Socket
+import Timeout
+import Types
 
-discover :: Members '[Socket, Multicast, Trace] r => Sem r (Maybe NS.Socket)
-discover = do
-    trace "Discovering..."
+discover :: Members '[Socket, Multicast, Trace, Timeout] r => Sem r (Maybe NS.Socket)
+discover = timeout (5 * 1000000) $ do
     ip <- multicast "239.255.255.250" 1982
     connect ip
 
-program :: Members '[Config, Socket, Multicast, Trace] r => Sem r ()
+program :: Members '[Config, Socket, Multicast, Trace, Timeout] r => Sem r ()
 program = do
     commands <- listToMaybe <$> getArguments
     case commands of
@@ -31,22 +34,31 @@ program = do
             ip           <- resolve host port
             case ip of
                 Nothing -> do
+                    trace $ "Couldn't resolve " ++ show ip
+                    trace "Discovering..."
                     sock <- discover
-                    maybe (trace "Discovery timeout!") 
-                          (unicast cmd) 
+                    maybe (trace "Discovery timeout!")
+                          (unicast cmd)
                           sock
-                _ -> do
+                Just ip -> do
+                    trace "Resolved!"
                     trace "Connecting..."
                     sock <- connect ip
-                    maybe (discover >>= maybe (trace "Discovery timeout!") (unicast cmd)) 
-                          (unicast cmd) 
-                          sock
+                    unicast cmd sock
 
 main :: IO ()
 main =
-    runM
-        . interpretConfig
-        . interpretMulticast
-        . interpretSocket
-        . traceToIO
-        $ program
+    let r = runFinal
+              . runTimeoutToIO
+              . embedToFinal
+              . interpretConfig
+              . runResource
+              . interpretMulticast
+              . interpretSocket
+              . traceToIO
+              $ program
+     in do
+       r `catch` (\(e :: SomeException) -> do
+         print e
+         updateAddress "Null"
+                 )
