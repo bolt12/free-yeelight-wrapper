@@ -24,7 +24,7 @@ runTimeoutToIO =
   interpretFinal
     ( \case
         Timeout i ma -> do
-          s <- getInitialStateS
+          n <- pureS Nothing
           ma' <- T.timeout i <$> runS ma
-          pure $ maybe (s $> Nothing) (Just <$>) <$> ma'
+          pure $ ma' >>= maybe n (pure . fmap Just)
     )
