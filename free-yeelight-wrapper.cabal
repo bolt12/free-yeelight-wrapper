@@ -46,7 +46,7 @@ library
       directory
   default-language: Haskell2010
 
-executable free-yeelight-wrapper-exe
+executable yeelight-wrapper
   main-is: Main.hs
   other-modules:
       Paths_free_yeelight_wrapper

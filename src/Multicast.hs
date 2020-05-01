@@ -35,7 +35,7 @@ interpretMulticast = interpret (\case
               (embed . close . fst)
               (embed . \(sSock, sAddr) -> do
                 sendTo sSock discoveryProtocol sAddr
-                (msg, rAddr)   <- recvFrom sSock 1024
+                (msg, rAddr) <- recvFrom sSock 1024
                 let (SockAddrInet _ host) = rAddr
                     (w1, w2, w3, w4)      = hostAddressToTuple host
                     (i1, i2, i3, i4)      = (fromIntegral w1, fromIntegral w2, fromIntegral w3, fromIntegral w4)
